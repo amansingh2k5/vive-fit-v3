@@ -25,7 +25,6 @@ const workoutSplitSchema = new mongoose.Schema({
   generatedAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 
-// No unique index — use findOneAndUpdate with upsert instead
 workoutSplitSchema.index({ user: 1 });
 
 const WorkoutSplit = mongoose.model('WorkoutSplit', workoutSplitSchema);

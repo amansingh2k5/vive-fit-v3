@@ -6,7 +6,6 @@ import Workout from '../models/Workout.js';
 const router = express.Router();
 router.use(verifyToken);
 
-// ── Joi schemas — RPE is fully optional, empty string allowed ──
 const setSchema = Joi.object({
   reps:   Joi.number().integer().min(1).max(200).required(),
   weight: Joi.number().min(0).max(2000).required(),

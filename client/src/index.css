@@ -1,11 +1,8 @@
-/* ── Google Fonts ─────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* ── Base reset ───────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
@@ -20,16 +17,13 @@ body {
   overscroll-behavior: none;
 }
 
-/* ── Scrollbar ────────────────────────────────────────────── */
 ::-webkit-scrollbar        { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track  { background: transparent; }
 ::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.12); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(173,255,47,0.4); }
 
-/* ── Reusable component layer ─────────────────────────────── */
 @layer components {
 
-  /* Glass card */
   .card {
     @apply bg-surface rounded-2xl;
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -43,7 +37,6 @@ body {
     backdrop-filter: blur(16px);
   }
 
-  /* Neon button — primary CTA */
   .btn-neon {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-body font-semibold text-bg text-sm transition-all duration-200 select-none cursor-pointer;
     background: #adff2f;
@@ -56,7 +49,6 @@ body {
   .btn-neon:active:not(:disabled) { transform: translateY(0); }
   .btn-neon:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* Electric blue button */
   .btn-electric {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-body font-semibold text-bg text-sm transition-all duration-200 select-none cursor-pointer;
     background: #00f2ff;
@@ -68,7 +60,6 @@ body {
   }
   .btn-electric:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* Hot pink button */
   .btn-pink {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-body font-semibold text-white text-sm transition-all duration-200 select-none cursor-pointer;
     background: #ff007f;
@@ -79,7 +70,6 @@ body {
   }
   .btn-pink:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* Ghost / outline button */
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-body font-medium text-sm border border-white/15 text-slate-300 transition-all duration-200 select-none cursor-pointer bg-transparent;
   }
@@ -90,7 +80,6 @@ body {
   }
   .btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* Form input */
   .input {
     @apply w-full px-4 py-3 rounded-xl bg-surface2 text-slate-100 text-sm outline-none transition-all duration-200 placeholder-slate-500;
     border: 1px solid rgba(255, 255, 255, 0.10);
@@ -103,22 +92,18 @@ body {
   .input::-webkit-inner-spin-button,
   .input::-webkit-outer-spin-button { -webkit-appearance: none; }
 
-  /* Label */
   .label {
     @apply block text-xs font-semibold text-muted uppercase tracking-widest mb-1.5;
   }
 
-  /* Stat badge */
   .stat-badge {
     @apply card p-4 flex flex-col gap-1;
   }
 
-  /* Section heading */
   .section-title {
     @apply font-display text-2xl tracking-widest text-slate-100 mb-1;
   }
 
-  /* Gradient text */
   .text-neon-grad {
     background: linear-gradient(90deg, #adff2f, #00f2ff);
     -webkit-background-clip: text;
@@ -133,7 +118,6 @@ body {
     background-clip: text;
   }
 
-  /* Progress bar container */
   .progress-track {
     @apply h-2 rounded-full overflow-hidden;
     background: rgba(255,255,255,0.08);
@@ -144,12 +128,10 @@ body {
     background: linear-gradient(90deg, #adff2f, #00f2ff);
   }
 
-  /* Muscle group badge */
   .muscle-badge {
     @apply text-xs font-semibold px-2.5 py-0.5 rounded-full uppercase tracking-wide;
   }
 
-  /* OTP digit input */
   .otp-input {
     @apply w-12 h-14 text-center text-2xl font-display tracking-widest bg-surface2 rounded-xl text-neon outline-none transition-all duration-200;
     border: 1px solid rgba(255, 255, 255, 0.10);
@@ -160,7 +142,6 @@ body {
   }
 }
 
-/* ── Recharts overrides ───────────────────────────────────── */
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
   stroke: rgba(255,255,255,0.06) !important;

@@ -26,9 +26,9 @@ export const issueToken = (res, userId) => {
 
   res.cookie('token', token, {
     httpOnly: true,
-    secure:   isProd,                        // HTTPS only in production
-    sameSite: isProd ? 'none' : 'lax',       // 'none' required for cross-origin cookies (frontend ↔ backend on different Vercel URLs)
-    maxAge:   7 * 24 * 60 * 60 * 1000,      // 7 days
+    secure:   isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge:   7 * 24 * 60 * 60 * 1000,
     path:     '/',
   });
 

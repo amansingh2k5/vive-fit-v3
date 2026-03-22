@@ -11,7 +11,6 @@ import User from '../models/User.js';
 const router = express.Router();
 router.use(verifyToken);
 
-// Lazy OpenAI — never crashes at startup if key is missing
 let _openai = null;
 const getAI = () => {
   if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.startsWith('sk-proj-your')) {
@@ -28,7 +27,6 @@ const parseJSON = raw => {
   return JSON.parse(clean);
 };
 
-// ── Built-in fallback splits (no API key needed) ──────────
 const FALLBACK = {
   ppl: { splitName:'Push Pull Legs', splitType:'ppl', days:[
     { dayName:'Monday',    focus:'Push — Chest, Shoulders, Triceps', muscleGroups:['chest','shoulders','arms'], isRestDay:false, exercises:[{name:'Bench Press',sets:4,repsRange:'6-10',muscleGroup:'chest',notes:'Control the descent'},{name:'Overhead Press',sets:3,repsRange:'8-12',muscleGroup:'shoulders',notes:''},{name:'Incline Dumbbell Press',sets:3,repsRange:'10-12',muscleGroup:'chest',notes:''},{name:'Lateral Raises',sets:3,repsRange:'15-20',muscleGroup:'shoulders',notes:''},{name:'Tricep Pushdown',sets:3,repsRange:'12-15',muscleGroup:'arms',notes:''}]},
@@ -68,7 +66,6 @@ const FALLBACK = {
   ]},
 };
 
-// ─── POST /api/ai/generate-split ──────────────────────────
 router.post('/generate-split', async (req, res, next) => {
   try {
     const { splitType = 'ppl', daysPerWeek = 6 } = req.body;
@@ -105,7 +102,6 @@ router.post('/generate-split', async (req, res, next) => {
       splitData = FALLBACK[splitType] || FALLBACK.ppl;
     }
 
-    // Delete existing and create fresh to avoid unique-index conflicts
     await WorkoutSplit.deleteOne({ user: req.user._id });
     const split = await WorkoutSplit.create({
       ...splitData,
@@ -128,7 +124,6 @@ router.post('/generate-calories', async (req, res, next) => {
     const user = await User.findById(req.user._id);
     const { goal = user.goal, custom = false, customCalories } = req.body;
 
-    // Rule-based calculation (always works, no API key needed)
     const weight   = user.stats?.weightKg || 75;
     const height   = user.stats?.heightCm || 175;
     const age      = user.stats?.age      || 25;
@@ -162,7 +157,6 @@ router.post('/generate-calories', async (req, res, next) => {
       }
     }
 
-    // Macros: protein 2g/kg, fat 25%, rest carbs
     protein = Math.round(weight * 2);
     fat     = Math.round((targetCalories * 0.25) / 9);
     carbs   = Math.round((targetCalories - protein * 4 - fat * 9) / 4);
@@ -170,7 +164,6 @@ router.post('/generate-calories', async (req, res, next) => {
     // Try to enhance with AI if key available
     let aiInsight = null;
     try {
-      const openai = getAI();
       const prompt = [
         'User: Goal=' + goal + ', Weight=' + weight + 'kg, TDEE=' + tdee + 'kcal, Target=' + targetCalories + 'kcal',
         'Give a 2-sentence explanation of WHY these specific numbers were chosen and ONE practical tip.',
@@ -182,9 +175,8 @@ router.post('/generate-calories', async (req, res, next) => {
         response_format: { type: 'json_object' },
       });
       aiInsight = JSON.parse(c.choices[0].message.content).insight;
-    } catch (_) { /* AI unavailable, skip */ }
+    } catch (_) { }
 
-    // Save to user
     await User.findByIdAndUpdate(req.user._id, { dailyCalorieTarget: targetCalories });
 
     res.json({

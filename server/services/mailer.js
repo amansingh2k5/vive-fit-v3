@@ -4,18 +4,14 @@ const transporter = nodemailer.createTransport({
   service: 'Gmail',
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,   // Google App Password (not your account password)
+    pass: process.env.EMAIL_PASS,
   },
 });
 
-// Verify connection on startup (non-blocking)
 transporter.verify().catch(err =>
   console.warn('⚠️  Nodemailer: could not verify SMTP connection –', err.message)
 );
 
-/**
- * Send a 6-digit password-reset OTP.
- */
 export const sendOtpEmail = async (toEmail, otp) => {
   const html = `
     <!DOCTYPE html>
@@ -77,9 +73,6 @@ export const sendOtpEmail = async (toEmail, otp) => {
   });
 };
 
-/**
- * Send a welcome email after registration.
- */
 export const sendWelcomeEmail = async (toEmail, name) => {
   await transporter.sendMail({
     from:    `"VibeFit AI 💪" <${process.env.EMAIL_USER}>`,

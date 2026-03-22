@@ -2,8 +2,6 @@ import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
 import streamifier from 'streamifier';
 
-// Configure on EVERY call so it always uses the latest env values
-// (fixes "Invalid cloud_name" when dotenv hasn't loaded at module init time)
 const configureCloudinary = () => {
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
