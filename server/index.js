@@ -18,35 +18,23 @@ import strengthRoutes from './routes/strength.js';
 
 const app = express();
 
+
 app.set('trust proxy', 1);
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-
 app.use(cors({
   origin: (_origin, cb) => cb(null, true),
   credentials:    true,
   methods:        ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization','Cookie','X-Requested-With'],
 }));
-
 app.options('*', cors());
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(rateLimit({
-  windowMs:       15 * 60 * 1000,
-  max:            300,
-  standardHeaders: true,
-  legacyHeaders:  false,
-  skip: (req) => !req.ip,
-}));
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max:      20,
-  skip: (req) => !req.ip,
-});
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false, skip: (req) => !req.ip }));
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, skip: (req) => !req.ip });
 
 app.use('/api/auth',     authLimiter, authRoutes);
 app.use('/api/user',     userRoutes);
@@ -61,10 +49,10 @@ app.use('/api/strength', strengthRoutes);
 app.get('/api/health', (_req, res) =>
   res.json({
     status:     'VibeFit API live 💪',
-    env:        process.env.NODE_ENV    || 'development',
+    env:        process.env.NODE_ENV || 'development',
     openai:     !!process.env.OPENAI_API_KEY,
     cloudinary: !!process.env.CLOUDINARY_CLOUD_NAME,
-    mongo:      !!process.env.MONGO_URI,
+    mongo:      mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     time:       new Date().toISOString(),
   })
 );
@@ -77,43 +65,59 @@ app.use((err, _req, res, _next) => {
   res.status(status).json({ message: err.message || 'Internal Server Error' });
 });
 
+
+
 let cached = global._mongoConn;
 if (!cached) cached = global._mongoConn = { conn: null, promise: null };
 
 const connectDB = async () => {
-  if (cached.conn && mongoose.connection.readyState === 1) return cached.conn;
-  if (!cached.promise) {
-    console.log('Connecting to MongoDB...');
-    cached.promise = mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS:          20000,
-      connectTimeoutMS:         10000,
-      maxPoolSize:              5,
-      bufferCommands:           false,
-    }).then(m => {
-      console.log('MongoDB connected successfully');
-      return m;
-    }).catch(err => {
-      console.error('MongoDB connection error:', err.message);
-      cached.promise = null;
-      throw err;
-    });
+  
+  if (cached.conn && mongoose.connection.readyState === 1) {
+    return cached.conn;
   }
+
+  
+  if (!cached.promise) {
+    const opts = {
+      serverSelectionTimeoutMS: 15000,
+      socketTimeoutMS:          30000,  
+      connectTimeoutMS:         15000,  
+      maxPoolSize:              5,
+      minPoolSize:              1,
+     
+    };
+
+    cached.promise = mongoose.connect(process.env.MONGO_URI, opts)
+      .then(m => {
+        console.log('✅ MongoDB connected');
+        return m;
+      })
+      .catch(err => {
+        console.error('❌ MongoDB error:', err.message);
+        cached.promise = null; 
+        throw err;
+      });
+  }
+
   cached.conn = await cached.promise;
   return cached.conn;
 };
 
+
 app.use(async (_req, _res, next) => {
-  try   { await connectDB(); next(); }
-  catch (e) { next(e); }
+  try {
+    await connectDB();
+    next();
+  } catch (e) {
+    next(Object.assign(e, { statusCode: 503, message: 'Database unavailable — ' + e.message }));
+  }
 });
+
 
 if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 5000;
   connectDB()
-    .then(() => app.listen(PORT, () => {
-      console.log('🚀 http://localhost:' + PORT);
-    }))
+    .then(() => app.listen(PORT, () => console.log('🚀 http://localhost:' + PORT)))
     .catch(e => { console.error('Startup failed:', e.message); process.exit(1); });
 }
 
