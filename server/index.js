@@ -1,5 +1,4 @@
-// VibeFit Express App — works locally AND as a Vercel serverless function
-import 'dotenv/config';   // safe on Vercel too: dotenv skips missing .env silently
+import 'dotenv/config';
 import express      from 'express';
 import mongoose     from 'mongoose';
 import cors         from 'cors';
@@ -19,22 +18,17 @@ import strengthRoutes from './routes/strength.js';
 
 const app = express();
 
-// ── CORS ──────────────────────────────────────────────────
 const ALLOWED = [
   'http://localhost:5173',
   'http://localhost:3000',
   process.env.FRONTEND_URL,
   process.env.CLIENT_URL,
-].filter(Boolean).map(u => u.replace(/\/$/, '')); // strip trailing slashes
+].filter(Boolean).map(u => u.replace(/\/$/, ''));
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || ALLOWED.includes(origin)) return cb(null, true);
-    // On Vercel same-origin requests have no origin header — always allow
-    cb(null, true);  // permissive — the JWT + cookie auth is the real security
-  },
+  origin: (_origin, cb) => cb(null, true),
   credentials:    true,
   methods:        ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization','Cookie','X-Requested-With'],
@@ -47,7 +41,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false }));
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 
-// ── Routes ────────────────────────────────────────────────
 app.use('/api/auth',     authLimiter, authRoutes);
 app.use('/api/user',     userRoutes);
 app.use('/api/workouts', workoutRoutes);
@@ -77,7 +70,7 @@ app.use((err, _req, res, _next) => {
   res.status(status).json({ message: err.message || 'Internal Server Error' });
 });
 
-// ── MongoDB — cached connection for serverless warm starts ─
+// MongoDB — cached connection (serverless warm starts reuse this)
 let cached = global._mongoConn;
 if (!cached) cached = global._mongoConn = { conn: null, promise: null };
 
@@ -89,19 +82,18 @@ const connectDB = async () => {
       socketTimeoutMS:          10000,
       maxPoolSize:              10,
       bufferCommands:           false,
-    }).then(m => { console.log('MongoDB connected'); return m; });
+    });
   }
   cached.conn = await cached.promise;
   return cached.conn;
 };
 
-// Connect before every request (instant no-op on warm starts)
 app.use(async (_req, _res, next) => {
   try   { await connectDB(); next(); }
   catch (e) { next(e); }
 });
 
-// ── Local dev — start listening ───────────────────────────
+// Only start listening in local dev — Vercel calls the exported app directly
 if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 5000;
   connectDB()
